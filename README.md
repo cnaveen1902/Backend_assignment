@@ -1,271 +1,237 @@
-# Organization Management Service
+Backend Assignment – FastAPI + MongoDB + Ngrok 
 
-A backend service for creating and managing organizations in a **multi-tenant architecture** using **FastAPI** and **MongoDB**. Each organization receives a **dynamically generated MongoDB collection**, while a master database stores global metadata and admin credentials. Authentication is implemented using **JWT**, and passwords are securely hashed.
+This project implements a **cloud-based backend system** using **FastAPI**, **MongoDB Atlas**, and **Ngrok** for public exposure.  
+It was developed as part of the backend assignment to demonstrate:
 
-# Features
-
-### Organization Management
-- Create organization with a dedicated MongoDB collection (`org_<name>`)
-- Get organization details
-- Update organization name, email, password  
-  → includes collection migration when renaming  
-- Delete organization and its collection
-
-### Admin Authentication
-- Admin login using JWT
-- Protected endpoints requiring authentication
-- Passwords hashed with Argon2/bcrypt
+- REST API development  
+- Cloud database integration  
+- Secure password hashing  
+- Modular backend structure  
+- API testing using Swagger  
 
 ---
 
-# Technology Stack
+1. Project Features**
 
-| Component | Technology |
-|----------|------------|
-| Backend Framework | FastAPI |
-| Database | MongoDB (Motor async driver) |
-| Authentication | JWT (python-jose) |
-| Password Hashing | Argon2 / bcrypt via Passlib |
-| Containerization | Docker, Docker Compose |
+### ✔ FastAPI backend  
+### ✔ MongoDB Atlas connection  
+### ✔ Organization creation endpoint  
+### ✔ Password hashing (bcrypt)  
+### ✔ Modular folder structure  
+### ✔ Fully tested using Swagger UI  
+### ✔ Exposed publicly using Ngrok  
 
-1. Clone the Repository
-git clone https://github.com/<your-username>/org-management-service.git
-cd org-management-service
+---
 
-2. Create & Activate Virtual Environment (Optional but Recommended)
-Create:
-```python -m venv .venv```
-
-Activate (Windows):
-```.venv\Scripts\activate```
-
-Activate (macOS/Linux):
-```source .venv/bin/activate```
-
-Install Dependencies
-```pip install -r requirements.txt```
-
-4. Create .env File
-
-Create a new file named .env in the project root:
+2. Project Folder Structure**
 
 ```
-MONGO_URI=mongodb://localhost:27017
-MASTER_DB=master_db
-JWT_SECRET=your_strong_secret_here
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
+backend/
+│
+├── app/
+│   ├── main.py          # FastAPI application
+│   ├── routes.py        # API routes/endpoints
+│   ├── models.py        # Pydantic models
+│   ├── database.py      # MongoDB connection
+│   ├── config.py        # Secrets (placeholders)
+│
+├── requirements.txt      # Project dependencies
+├── README.md             # Documentation
+├── .gitignore            # Ignored files
 ```
 
-5. Run the Application Locally
+---
+3. Technologies Used**
 
-Start the FastAPI server:
+| Technology | Purpose |
+|-----------|----------|
+| **FastAPI** | Backend framework |
+| **MongoDB Atlas** | Cloud database |
+| **Motor (Async MongoDB Client)** | Async DB operations |
+| **Pyngrok** | Public URL for testing |
+| **Uvicorn** | FastAPI server |
+| **Passlib (bcrypt)** | Password hashing |
+| **Pydantic** | Data validation |
 
-```uvicorn main:app --reload --host 0.0.0.0 --port 8000```
+---
 
+4. API Endpoints**
 
-Open Swagger UI:
+POST /org/create**
+Creates a new organization.
 
-**http://localhost:8000/docs**
-
-6. Run Using Docker (Recommended)
-
-Ensure Docker Desktop is running.
-
-Build & start containers:
-```docker-compose up --build```
-
-Stop containers:
-```docker-compose down```
-
-Exposed services:
-Service	URL	Description
-FastAPI App	**http://localhost:8000**
-	API Server
-MongoDB	**localhost:27017**	Database backend
-Running the Application
-
-Once running (via Docker or uvicorn):
-
-Access interactive documentation:
-**http://localhost:8000/docs**
-
-Test all API routes directly inside Swagger UI.
-
-API Endpoints
-1. Create Organization
-**POST /org/create**
-
-2. Get Organization
-**GET /org/get?organization_name=<name>**
-
-3. Update Organization
-**PUT /org/update**
-
-4. Delete Organization (Requires Authentication)
-**DELETE /org/delete**
-
-5. Admin Login
-**POST /admin/login**
-
-
-Returns JWT token.
-
-Authentication Instructions
-Step 1 — Login
-
-Send:
-
-**POST /admin/login**
-
-
-Response example:
-```
+### Request Body:
+```json
 {
-  "access_token": "<your-token>",
-  "token_type": "bearer"
+  "organization_name": "my_company",
+  "email": "owner@company.com",
+  "password": "mypassword123"
 }
 ```
-Step 2 — Click “Authorize” in Swagger UI
 
-Enter:
+### Responses:
+| Status | Meaning |
+|--------|----------|
+| **200** | Organization created |
+| **400** | Email already exists |
+| **500** | Server error (DB issue, validation issue, etc.) |
 
-`Bearer <your-token>`
+---
 
-Step 3 — You can now call protected routes
+5. How to Set Up the Project**
+
+Step 1 — Install libraries**
 ```
-/org/update
-
-/org/delete
-```
-
-**Push to GitHub**
-```
-git add .
-git commit -m "Add project files"
-git push origin main
+pip install -r requirements.txt
 ```
 
-# Architecture Diagram
-<img src="Architecture Diagram.png" alt="Alt text for the diagram" width="2500"/>
+---
 
-# Design Notes
+Step 2 — Configure MongoDB Atlas**
 
-## 1. Multi-Tenant Architecture Using Dynamic Collections
+1. Go to: https://cloud.mongodb.com  
+2. Create a cluster  
+3. Create a database user  
+4. Allow IP access: `0.0.0.0/0`  
+5. Copy your connection string:
 
-Instead of creating separate databases for each organization, the system uses one master database with dynamically created collections (org_<organization_name>).
-This approach provides:
+```
+mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/
+```
 
-* Faster connection management
+6. Open `app/config.py` and replace:
 
-* Lower resource consumption
+```python
+MONGO_URI = "YOUR_MONGO_URI_HERE"
+JWT_SECRET = "YOUR_SECRET_KEY"
+```
 
-* Easier migrations and maintenance
+---
 
-* Simpler deployment on managed DB services like Atlas
+Step 3 — Run FastAPI**
 
-* It also keeps each organization’s data logically isolated.
+```
+uvicorn app.main:app --reload
+```
 
-## 2. Master Database for Global Metadata
+Server runs on:
 
-* A single master_db stores:
+```
+http://127.0.0.1:8000
+```
 
-* Organization name
+Swagger UI:
 
-* Mapped collection name
+```
+http://127.0.0.1:8000/docs
+```
 
-* Admin credentials (hashed)
+---
 
-**Connection details**
+Step 4 — Make API Public (Ngrok)**
 
-This keeps all organizations discoverable without scanning multiple databases.
-Lookups become lightweight and predictable.
+1. Install ngrok  
+2. Set your token:
 
-## 3. Secure Authentication with JWT
+```
+ngrok config add-authtoken YOUR_TOKEN
+```
 
-`JWT` was selected because:
+3. Run:
 
-* It is stateless → no session store needed
+```
+ngrok http 8000
+```
 
-* Easy to validate on each request
+You will get:
 
-* Encodes both admin_id and organization_name for authorization
+```
+https://xxxx.ngrok-free.dev
+```
 
-* This makes it suitable for scalable microservice-style backends.
+Use:
 
-## 4. Password Hashing with Argon2 / bcrypt
+```
+https://xxxx.ngrok-free.dev/docs
+```
 
-`Passwords` are hashed using Passlib, with either bcrypt or Argon2.
-Reasons:
+to test your APIs online.
 
-* Strong resistance to brute-force attacks
+---
+6. Explanation of Each File**
 
-* Built-in salting
+### 🔹 **main.py**
+Loads FastAPI and routes.
 
-* Industry-standard practice for account security
+### 🔹 **routes.py**
+Contains all API endpoints (e.g., organization create).
 
-* Plain passwords are never stored.
+### 🔹 **models.py**
+Defines the request body schema using Pydantic.
 
-## 5. Async MongoDB Access Using Motor
+### 🔹 **database.py**
+Creates MongoDB client and collections.
 
-`Motor` enables non-blocking database operations.
-Benefits:
+### 🔹 **config.py**
+Stores database URI and JWT secret  
+(**Real secrets should NOT be uploaded to GitHub**).
 
-*Better performance under concurrency
+---
 
-*Ideal for FastAPI’s async request handlers
+7. How It Works (Architecture)**
 
-*This improves throughput for create/update/delete operations.
+1. Client sends API request → `/org/create`  
+2. Request is validated by Pydantic  
+3. Password is hashed using bcrypt  
+4. Data is stored in MongoDB  
+5. Successful response returned  
+6. Swagger UI is automatically generated  
+7. Ngrok provides a public testing URL  
 
-## 6. Collection Migration on Organization Rename
+This architecture follows industry standards for cloud backend systems.
 
-When renaming an organization:
+---
 
-* A new sanitized collection is created
+8. Things NOT to Upload to GitHub**
 
-* Documents from the old collection migrate to the new one
+ MongoDB password  
+ JWT_SECRET  
+ ngrok token  
+ `.env` file  
+ Real connection string  
 
-* Old collection is removed
+Instead use placeholders:
+```
+MONGO_URI = "YOUR_MONGO_URI_HERE"
+```
 
-* Master metadata updated
+---
+9. Sample Test Using Python**
 
-* This provides a smooth rename experience without data loss and demonstrates strong real-world multi-tenant behavior.
+```python
+import requests
 
-## 7. Dockerized Deployment for Simplicity
+BASE = "https://your-ngrok-url.ngrok-free.dev"
 
-Using **Docker & Docker Compose**:
+data = {
+    "organization_name": "test_company",
+    "email": "test@gmail.com",
+    "password": "pass123"
+}
 
-* Ensures consistent environments
+res = requests.post(BASE + "/org/create", json=data)
+print(res.json())
+```
 
-* Removes OS-specific issues
+---
+10. Conclusion**
 
-* Simplifies onboarding for reviewers
+This backend demonstrates:
+- Cloud integration  
+- Secure authentication handling  
+- API development with FastAPI  
+- Async database operations  
+- Real-world modular backend architecture  
 
-* Allows `MongoDB` + `FastAPI` to run together effortlessly
 
-This is ideal for assignment submissions and production deployment.
 
-## 8. Clean, Modular Main File
-
-Although the implementation is kept within main.py (as per assignment simplicity), the internal structure is still modular:
-
-* Helpers for hashing, JWT, sanitization
-
-* Separate request models
-
-* Clear dependency injection for authentication
-
-* Proper async database helpers
-
-* This keeps the code easy to extend into a fully modular package later.
-
-## 9. Error Handling & Validation
-
-**FastAPI’s** validation ensures:
-
-* Invalid inputs never reach the database
-
-* Meaningful error messages
-
-* Cleaner logic inside route handlers
-
-* This reduces runtime issues and improves robustness.
